@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "build/client"
+
+# The @netlify/remix-adapter Vite plugin emits the SSR function and wires the
+# catch-all routing automatically, so no manual [[redirects]] are needed.
+
+[dev]
+  command = "npm run dev"
+  targetPort = 3000

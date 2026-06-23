@@ -1,4 +1,5 @@
 import { vitePlugin as remix } from "@remix-run/dev";
+import { netlifyPlugin } from "@netlify/remix-adapter/plugin";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -21,6 +22,8 @@ export default defineConfig({
           v3_lazyRouteDiscovery: true,
         },
       }),
+    // Generates the Netlify serverless function + routing for Remix SSR.
+    !process.env.VITEST && netlifyPlugin(),
     tsconfigPaths(),
   ],
   server: {
