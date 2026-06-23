@@ -5,6 +5,14 @@
 # The @netlify/remix-adapter Vite plugin emits the SSR function and wires the
 # catch-all routing automatically, so no manual [[redirects]] are needed.
 
+[build.environment]
+  # Netlify's secret scanner fails the build if an env-var VALUE also appears in
+  # the repo/build output. The keys below are non-secret config (public API base
+  # URLs, provider name, refresh interval) or intentional demo credentials whose
+  # defaults live in code — so they're excluded from scanning. SESSION_SECRET is
+  # deliberately NOT listed: it is a real secret and its value is never in the repo.
+  SECRETS_SCAN_OMIT_KEYS = "AUTH_USERNAME,AUTH_PASSWORD,CRYPTO_PROVIDER,REFRESH_SECONDS,COINBASE_API_BASE,COINBASE_API_KEY,COINGECKO_API_BASE,COINGECKO_API_KEY"
+
 [dev]
   command = "npm run dev"
   targetPort = 3000
