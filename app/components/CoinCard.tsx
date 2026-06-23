@@ -19,7 +19,9 @@ interface CoinCardProps {
 
 /** Grid-view card: avatar, name/symbol, USD price, 24h badge, sparkline, BTC rate. */
 export function CoinCard({ coin, index, order }: CoinCardProps) {
-  const positive = isPositive(coin.change24h);
+  const hasChange = coin.change24h !== null;
+  const hasSpark = coin.sparkline.length > 0;
+  const positive = isPositive(coin.change24h ?? 0);
   const sparkColor = positive ? "#16a34a" : "#ef4444";
 
   return (
@@ -39,12 +41,20 @@ export function CoinCard({ coin, index, order }: CoinCardProps) {
 
       <div className="card__price">{formatUsd(coin.priceUsd)}</div>
 
-      <div className="card__mid">
-        <span className="change" data-positive={positive}>
-          {formatChange(coin.change24h)}
-        </span>
-        <Sparkline prices={coin.sparkline} color={sparkColor} width={104} height={34} withArea />
-      </div>
+      {(hasChange || hasSpark) && (
+        <div className="card__mid">
+          {hasChange ? (
+            <span className="change" data-positive={positive}>
+              {formatChange(coin.change24h as number)}
+            </span>
+          ) : (
+            <span />
+          )}
+          {hasSpark && (
+            <Sparkline prices={coin.sparkline} color={sparkColor} width={104} height={34} withArea />
+          )}
+        </div>
+      )}
 
       <div className="card__btc">
         <span className="card__btc-label">vs BTC</span>

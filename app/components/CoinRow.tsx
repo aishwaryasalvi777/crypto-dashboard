@@ -19,7 +19,9 @@ interface CoinRowProps {
 
 /** List-view row mirroring the table grid columns. */
 export function CoinRow({ coin, index, order }: CoinRowProps) {
-  const positive = isPositive(coin.change24h);
+  const hasChange = coin.change24h !== null;
+  const hasSpark = coin.sparkline.length > 0;
+  const positive = isPositive(coin.change24h ?? 0);
   const sparkColor = positive ? "#16a34a" : "#ef4444";
 
   return (
@@ -36,11 +38,19 @@ export function CoinRow({ coin, index, order }: CoinRowProps) {
           <div className="coin-id__symbol">{coin.symbol}</div>
         </div>
       </div>
-      <Sparkline prices={coin.sparkline} color={sparkColor} width={110} height={30} />
+      {hasSpark ? (
+        <Sparkline prices={coin.sparkline} color={sparkColor} width={110} height={30} />
+      ) : (
+        <span />
+      )}
       <span className="row__price right">{formatUsd(coin.priceUsd)}</span>
-      <span className="row__change right" data-positive={positive}>
-        {formatChange(coin.change24h)}
-      </span>
+      {hasChange ? (
+        <span className="row__change right" data-positive={positive}>
+          {formatChange(coin.change24h as number)}
+        </span>
+      ) : (
+        <span className="row__btc right">—</span>
+      )}
       <span className="row__btc right">{formatBtc(coin.priceBtc)}</span>
     </div>
   );

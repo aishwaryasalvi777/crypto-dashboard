@@ -92,8 +92,10 @@ makes the logic unit-testable without a DOM.
 - Unit tests for formatting, ordering, filtering, and auth verification.
 
 ### 🚧 Remaining / deferred (by design — "integrate later")
-- **Live API is opt-in.** Default is `mock`. Set `CRYPTO_PROVIDER=coingecko` for live data.
-- **Coinbase provider** not written (CoinGecko used instead — see trade-offs). Slot exists.
+- **Live by default.** `CRYPTO_PROVIDER=coinbase` (live) is the default; `coingecko` and `mock`
+  are alternatives. Coinbase + CoinGecko providers are both implemented.
+- **Coinbase 24h change / sparkline** are unavailable from its public API (degrade gracefully);
+  use `coingecko` for those visuals. An authenticated Coinbase key is wired but unused.
 - **Real auth provider** not integrated — single env credential pair stands in. Session plumbing is
   real and reusable.
 - No server-side persistence of card order (per-browser `localStorage` only) — the brief only
@@ -121,10 +123,13 @@ makes the logic unit-testable without a DOM.
 
 ## 4. Trade-offs & decisions
 
-- **CoinGecko over Coinbase.** The brief mentions Coinbase, but Coinbase's exchange-rate endpoints
-  don't return name + 24h change + 7-day sparkline in one keyless call, and don't cover all listed
-  coins uniformly. CoinGecko's `coins/markets` returns everything the design needs in one request.
-  Because data flows through `CryptoProvider`, swapping to Coinbase later is a single new file.
+- **Coinbase is the default provider (the brief names it).** `/v2/exchange-rates?currency=USD` is a
+  single keyless call returning every coin's USD + BTC rate — exactly the required card fields.
+  Its public API does **not** expose 24h change or price history, so those design extras (not in the
+  required fields) degrade gracefully: `Coin.change24h` is `null` and `sparkline` is `[]`, and the
+  card/row omit the badge + sparkline. **CoinGecko** stays available (`CRYPTO_PROVIDER=coingecko`)
+  for the full visual design, since its `coins/markets` returns 24h change + sparkline in one call.
+  All three sources sit behind `CryptoProvider`; switching is one env var.
 - **Native HTML5 DnD over a library.** The design already uses native DnD; it's zero-dependency and
   sufficient for reordering a small list. Trade-off: weaker touch + keyboard support. If DnD needs
   grow, switch to `@dnd-kit` behind the same `useCardOrder` hook.
@@ -161,9 +166,10 @@ makes the logic unit-testable without a DOM.
 | File | Responsibility |
 | --- | --- |
 | `app/routes/dashboard.tsx` | Protected route; loader fetches markets; hosts client interactions |
-| `app/lib/crypto/provider.server.ts` | `CryptoProvider` interface + factory |
+| `app/lib/crypto/provider.server.ts` | `CryptoProvider` interface + factory (coinbase/coingecko/mock) |
+| `app/lib/crypto/coinbase.provider.server.ts` | Live Coinbase integration (default) |
+| `app/lib/crypto/coingecko.provider.server.ts` | Live CoinGecko integration (full visuals) |
 | `app/lib/crypto/mock.provider.server.ts` | Deterministic demo data |
-| `app/lib/crypto/coingecko.provider.server.ts` | Live CoinGecko integration |
 | `app/lib/crypto/format.ts` | Pure formatting + sparkline math (heavily tested) |
 | `app/lib/crypto/types.ts` | `Coin` domain model — the provider contract |
 | `app/lib/auth/auth.server.ts` | Credential verify + `requireUserId` guard |

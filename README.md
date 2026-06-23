@@ -70,15 +70,18 @@ cp .env.example .env
 | `SESSION_SECRET` | _(required)_ | Secret used to sign the session cookie. Use a long random string. |
 | `AUTH_USERNAME` | `admin` | Temporary login username (auth integration is wired but credentials live in env). |
 | `AUTH_PASSWORD` | `password` | Temporary login password. **Change before any real use.** |
-| `CRYPTO_PROVIDER` | `mock` | Data source: `mock` (offline demo data) or `coingecko` (live API). |
+| `CRYPTO_PROVIDER` | `coinbase` | Data source: `coinbase` (live, default), `coingecko` (live + 24h change & sparklines), or `mock` (offline demo data). |
+| `COINBASE_API_BASE` | `https://api.coinbase.com` | Coinbase API base URL. |
+| `COINBASE_API_KEY` | _(empty)_ | **Not required** for public exchange rates — reserved for future authenticated features. Leave blank. |
 | `COINGECKO_API_BASE` | `https://api.coingecko.com/api/v3` | Override for CoinGecko Pro / proxy. |
 | `COINGECKO_API_KEY` | _(empty)_ | Optional CoinGecko API key for higher rate limits. |
 | `REFRESH_SECONDS` | `30` | Auto-refresh interval (10–300s). |
 
-> **Why `mock` by default?** The brief states *"all the integrations and API we will integrate
-> later."* The app ships fully functional against deterministic demo data so it runs offline with
-> zero setup. Flip `CRYPTO_PROVIDER=coingecko` to hit the live API. See
-> [CLAUDE.md](./CLAUDE.md#data-provider-layer) for the contract.
+> **Providers.** Per the brief, live prices come from the **Coinbase API** (`/v2/exchange-rates`),
+> a single keyless request that yields each coin's USD and BTC rate. Coinbase's public API doesn't
+> expose 24h change or price history, so those visuals degrade gracefully under `coinbase`. Set
+> `CRYPTO_PROVIDER=coingecko` to get the full design (24h badges + sparklines), or `mock` to run
+> fully offline with zero setup. See [CLAUDE.md](./CLAUDE.md#data-provider-layer) for the contract.
 
 ### 3. Run
 
@@ -129,17 +132,21 @@ routes/dashboard.tsx (loader, server)
               └─ provider.getMarkets()    ← returns normalized Coin[]
 ```
 
-- **`mock`** — built-in deterministic dataset (12 coins, generated sparklines). No network, no keys.
+- **`coinbase`** (default) — live `/v2/exchange-rates?currency=USD`. One keyless request returns
+  the rate of every currency per USD; we derive `priceUsd = 1 / rate` and
+  `priceBtc = rate[BTC] / rate[coin]`. No 24h change / sparkline (not exposed publicly).
 - **`coingecko`** — live `coins/markets` endpoint (USD prices, 24h change, 7-day sparkline). BTC
-  rate is derived as `coin.priceUsd / bitcoin.priceUsd`.
+  rate derived as `coin.priceUsd / bitcoin.priceUsd`. Use this for the full visual design.
+- **`mock`** — built-in deterministic dataset (12 coins, generated sparklines). No network, no keys.
 
 Refreshing (manual button + auto-refresh toggle) re-runs the loader via Remix's `useRevalidator`,
 so data fetching stays on the server and the client just re-renders.
 
-> The brief references the Coinbase API; CoinGecko is used because its single `coins/markets`
-> endpoint returns name, symbol, USD price, 24h change, and 7-day sparkline in one keyless call,
-> which maps directly to the design. A Coinbase provider can be dropped in behind the same
-> interface — see [CLAUDE.md](./CLAUDE.md#trade-offs).
+> Coinbase is the default because the brief specifies it and its exchange-rates endpoint maps
+> directly to the required USD + BTC fields. The 24h badge and sparkline are design extras beyond
+> the required fields; because they aren't in Coinbase's public response, the cards omit them under
+> `coinbase` and show them under `coingecko`. Both sit behind the same `CryptoProvider` interface —
+> see [CLAUDE.md](./CLAUDE.md#trade-offs).
 
 ---
 

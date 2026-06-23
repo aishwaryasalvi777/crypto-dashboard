@@ -14,9 +14,12 @@ export interface Coin {
   priceUsd: number;
   /** Price expressed in BTC (priceUsd / bitcoinPriceUsd). 1 for BTC itself. */
   priceBtc: number;
-  /** 24h price change, as a percentage (e.g. -1.2 means -1.2%). */
-  change24h: number;
-  /** 7-day price samples, oldest → newest, for the sparkline. May be empty. */
+  /**
+   * 24h price change as a percentage (e.g. -1.2 means -1.2%), or `null` when the
+   * source doesn't expose it (e.g. Coinbase's public exchange-rates endpoint).
+   */
+  change24h: number | null;
+  /** 7-day price samples, oldest → newest, for the sparkline. Empty when unavailable. */
   sparkline: number[];
 }
 
@@ -24,5 +27,5 @@ export interface Coin {
 export interface MarketsResult {
   coins: Coin[];
   /** Source that produced the data, surfaced for debugging / the UI. */
-  source: "mock" | "coingecko";
+  source: "mock" | "coingecko" | "coinbase";
 }
