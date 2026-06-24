@@ -6,9 +6,7 @@ price, Bitcoin (BTC) exchange rate, coin logo, and (depending on the data source
 badge and 7-day sparkline. Includes dark/light theming, grid/list views, drag-and-drop reordering
 that persists, and session-based authentication.
 
-🔗 **Live demo:** https://crypto-currency-canvas.netlify.app
-🎨 **Design source:** [`Crypto Dashboard.dc.html`](https://claude.ai/design/p/1ab29611-82ab-449d-87dc-068285b5d7bf)
-(the UI is a faithful Remix translation of this Claude Design file)
+🔗 **Live demo:** https://crypto-currency-canvas.netlify.app 
 
 > 📖 For a single, consolidated record of the project — what it is, every decision, and the full
 > build/deploy history — see [documentation.md](./documentation.md). For AI/engineer contribution
@@ -23,16 +21,31 @@ that persists, and session-based authentication.
 
 ## Table of contents
 
-- [Features](#features)
-- [Tech stack](#tech-stack)
-- [Quick start](#quick-start)
-- [Environment variables](#environment-variables)
-- [Architecture](#architecture)
-- [Decisions & tradeoffs](#decisions--tradeoffs)
-- [Testing](#testing)
-- [Deployment (Netlify)](#deployment-netlify)
-- [Guidelines for AI follow-up features](#guidelines-for-ai-follow-up-features)
-- [Project structure](#project-structure)
+- [Tessera — Crypto Dashboard](#tessera--crypto-dashboard)
+  - [Table of contents](#table-of-contents)
+  - [Features](#features)
+    - [Core requirements](#core-requirements)
+    - [Bonus / extras](#bonus--extras)
+  - [Tech stack](#tech-stack)
+  - [Quick start](#quick-start)
+    - [Prerequisites](#prerequisites)
+    - [1. Install](#1-install)
+    - [2. Configure environment](#2-configure-environment)
+    - [3. Run](#3-run)
+    - [Scripts](#scripts)
+  - [Environment variables](#environment-variables)
+  - [Architecture](#architecture)
+    - [Request flow](#request-flow)
+    - [Domain model](#domain-model)
+    - [Client state \& the watchlist](#client-state--the-watchlist)
+    - [Authentication](#authentication)
+  - [Decisions \& tradeoffs](#decisions--tradeoffs)
+  - [Coin-id drift — how it's handled](#coin-id-drift--how-its-handled)
+  - [Testing](#testing)
+  - [Deployment (Netlify)](#deployment-netlify)
+  - [Guidelines for AI follow-up features](#guidelines-for-ai-follow-up-features)
+  - [Project structure](#project-structure)
+  - [License](#license)
 
 ---
 
