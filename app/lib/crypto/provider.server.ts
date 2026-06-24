@@ -1,8 +1,7 @@
 import { createTtlCache } from "./cache.server";
 import type { MarketsResult } from "./types";
-import { createMockProvider } from "./mock.provider.server";
 import { createCoinGeckoProvider } from "./coingecko.provider.server";
-import { createCoinbaseProvider } from "./coinbase.provider.server";
+import { createCoinbaseProvider, loadCoinbasePrices } from "./coinbase.provider.server";
 import { createHybridProvider } from "./hybrid.provider.server";
 
 /**
@@ -14,12 +13,11 @@ export interface CryptoProvider {
   getMarkets(): Promise<MarketsResult>;
 }
 
-export type ProviderName = "mock" | "coinbase" | "coingecko" | "hybrid";
+export type ProviderName = "coinbase" | "coingecko" | "hybrid";
 
 /** The provider that will serve the current request — also used to label results/errors. */
 export function getActiveProviderName(): ProviderName {
   const raw = (process.env.CRYPTO_PROVIDER || "hybrid").toLowerCase();
-  if (raw === "mock") return "mock";
   if (raw === "coingecko") return "coingecko";
   if (raw === "coinbase") return "coinbase";
   return "hybrid";
@@ -41,37 +39,31 @@ function coingeckoConfig() {
 
 export function getCryptoProvider(): CryptoProvider {
   switch (getActiveProviderName()) {
-    case "hybrid":
-      // Coinbase = price/BTC authority, CoinGecko = 24h change + sparkline enrichment.
-      return createHybridProvider(
-        createCoinbaseProvider(coinbaseConfig()),
-        createCoinGeckoProvider(coingeckoConfig()),
-      );
     case "coinbase":
       return createCoinbaseProvider(coinbaseConfig());
     case "coingecko":
       return createCoinGeckoProvider(coingeckoConfig());
-    case "mock":
-    default:
-      return createMockProvider();
+    case "hybrid":
+    default: {
+      // CoinGecko = full searchable catalog (+ charts); Coinbase prices overlaid where quoted.
+      const coingecko = createCoinGeckoProvider(coingeckoConfig());
+      return createHybridProvider(
+        () => coingecko.getMarkets(),
+        () => loadCoinbasePrices(coinbaseConfig()),
+      );
+    }
   }
-}
-
-/** Always-available offline source, used by the dashboard's "Load demo data" fallback. */
-export function getMockProvider(): CryptoProvider {
-  return createMockProvider();
 }
 
 // Short-TTL cache shared across requests/tabs so live endpoints aren't hit on every refresh.
 const marketsCache = createTtlCache<MarketsResult>(12_000);
 
 /**
- * Fetch markets through the configured provider, with a short cache + in-flight de-dup. The mock
- * source is uncached (free + deterministic). This is what the loader should call.
+ * Fetch markets through the configured live provider, with a short cache + in-flight de-dup.
+ * This is what the loader should call.
  */
 export function getMarketsCached(): Promise<MarketsResult> {
   const name = getActiveProviderName();
   const provider = getCryptoProvider();
-  if (name === "mock") return provider.getMarkets();
   return marketsCache(name, () => provider.getMarkets());
 }

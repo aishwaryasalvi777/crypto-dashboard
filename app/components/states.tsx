@@ -20,15 +20,7 @@ export function SkeletonGrid({ count = 8 }: { count?: number }) {
   );
 }
 
-export function ErrorState({
-  message,
-  onRetry,
-  onLoadDemo,
-}: {
-  message: string;
-  onRetry: () => void;
-  onLoadDemo: () => void;
-}) {
+export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="state">
       <div className="state__icon">!</div>
@@ -37,9 +29,6 @@ export function ErrorState({
       <div className="state__actions">
         <button type="button" className="btn-primary" onClick={onRetry}>
           Retry
-        </button>
-        <button type="button" className="btn-secondary" onClick={onLoadDemo}>
-          Load demo data
         </button>
       </div>
     </div>
