@@ -138,24 +138,6 @@ Open http://localhost:3000 and log in with your `.env` credentials.
 
 ---
 
-## Environment variables
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `SESSION_SECRET` | _(required)_ | Secret that signs the session cookie. Use a long random string. |
-| `AUTH_USERNAME` | `admin` | Login username (temporary, env-based credentials). |
-| `AUTH_PASSWORD` | `password` | Login password. **Change before any real use.** |
-| `CRYPTO_PROVIDER` | `hybrid` | Live data source: `hybrid` (default — CoinGecko catalog + Coinbase prices), `coinbase`, or `coingecko`. |
-| `COINBASE_API_BASE` | `https://api.coinbase.com` | Coinbase API base URL. |
-| `COINBASE_API_KEY` | _(empty)_ | **Not required** for public exchange rates — reserved for future authenticated features. Leave blank. |
-| `COINGECKO_API_BASE` | `https://api.coingecko.com/api/v3` | Override for CoinGecko Pro / proxy. |
-| `COINGECKO_API_KEY` | _(empty)_ | Optional CoinGecko key for higher rate limits. |
-| `REFRESH_SECONDS` | `30` | Auto-refresh interval (clamped 10–300s). |
-
-`.env` is gitignored. On Netlify, set these in **Site configuration → Environment variables**
-(see [Deployment](#deployment-netlify)).
-
----
 
 ## Architecture
 
