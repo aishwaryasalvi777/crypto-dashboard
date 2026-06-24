@@ -3,13 +3,34 @@ export type ViewMode = "grid" | "list";
 interface ControlsProps {
   query: string;
   view: ViewMode;
+  countLabel: string;
   onQueryChange: (value: string) => void;
   onViewChange: (view: ViewMode) => void;
+  onAddClick: () => void;
 }
 
-export function Controls({ query, view, onQueryChange, onViewChange }: ControlsProps) {
+export function Controls({
+  query,
+  view,
+  countLabel,
+  onQueryChange,
+  onViewChange,
+  onAddClick,
+}: ControlsProps) {
   return (
     <div className="controls">
+      <button type="button" className="add-coin-btn" onClick={onAddClick}>
+        <span className="add-coin-btn__plus" aria-hidden>
+          +
+        </span>
+        <span>Add coin</span>
+        <span className="add-coin-btn__shine" aria-hidden />
+      </button>
+
+      <span className="controls__count tabular">{countLabel}</span>
+
+      <span className="controls__spacer" />
+
       <div className="search">
         <span className="search__icon" aria-hidden>
           ⌕
@@ -19,7 +40,7 @@ export function Controls({ query, view, onQueryChange, onViewChange }: ControlsP
           type="search"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Filter by name or symbol…"
+          placeholder="Filter coins…"
           aria-label="Filter cryptocurrencies by name or symbol"
         />
       </div>

@@ -20,22 +20,22 @@ export function CoinCard({ coin, index, drag, onRemove }: CoinCardProps) {
 
   return (
     <div className="card" {...dragProps(coin.id, drag)}>
+      <button
+        type="button"
+        className="remove-btn card__remove"
+        title={`Remove ${coin.name}`}
+        aria-label={`Remove ${coin.name}`}
+        draggable={false}
+        onClick={() => onRemove(coin.id)}
+      >
+        ✕
+      </button>
       <div className="card__top">
-        <CoinAvatar symbol={coin.symbol} index={index} size={34} />
+        <CoinAvatar symbol={coin.symbol} index={index} size={36} />
         <div className="coin-id">
           <div className="coin-id__name">{coin.name}</div>
           <div className="coin-id__symbol">{coin.symbol}</div>
         </div>
-        <button
-          type="button"
-          className="remove-btn"
-          title={`Remove ${coin.name}`}
-          aria-label={`Remove ${coin.name}`}
-          draggable={false}
-          onClick={() => onRemove(coin.id)}
-        >
-          ×
-        </button>
       </div>
 
       <div className="card__price">{formatUsd(coin.priceUsd)}</div>

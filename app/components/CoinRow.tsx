@@ -52,7 +52,7 @@ export function CoinRow({ coin, index, drag, onRemove }: CoinRowProps) {
         draggable={false}
         onClick={() => onRemove(coin.id)}
       >
-        ×
+        ✕
       </button>
     </div>
   );

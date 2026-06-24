@@ -20,16 +20,16 @@ import { filterCoins, orderCoins } from "~/lib/order";
 export const meta: MetaFunction = () => [{ title: "Tessera — Crypto Dashboard" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUserId(request);
+  const userName = await requireUserId(request);
 
   const refreshSeconds = clampRefresh(Number(process.env.REFRESH_SECONDS) || 30);
 
   try {
     const { coins, source } = await getMarketsCached();
-    return json({ coins, source, error: null as string | null, refreshSeconds });
+    return json({ coins, source, error: null as string | null, refreshSeconds, userName });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Network error — check your connection.";
-    return json({ coins: [], source: getActiveProviderName(), error: message, refreshSeconds });
+    return json({ coins: [], source: getActiveProviderName(), error: message, refreshSeconds, userName });
   }
 }
 
@@ -38,7 +38,7 @@ function clampRefresh(n: number): number {
 }
 
 export default function Dashboard() {
-  const { coins: catalog, error, refreshSeconds } = useLoaderData<typeof loader>();
+  const { coins: catalog, error, refreshSeconds, userName } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   const [theme, toggleTheme] = useTheme();
@@ -80,6 +80,7 @@ export default function Dashboard() {
   return (
     <div className="app">
       <Header
+        userName={userName}
         updatedLabel={updatedLabel}
         isRefreshing={isRefreshing || isNavigating}
         auto={auto}
@@ -89,34 +90,26 @@ export default function Dashboard() {
         onToggleTheme={toggleTheme}
       />
 
-      <Controls query={query} view={view} onQueryChange={setQuery} onViewChange={setView} />
+      <Controls
+        query={query}
+        view={view}
+        onQueryChange={setQuery}
+        onViewChange={setView}
+        onAddClick={() => setShowAdd(true)}
+        countLabel={hasCatalog ? `${visible.length} of ${watchlist.ids.length} tracked` : ""}
+      />
 
-      <div className="meta-row">
-        <div className="meta-row__left">
-          <button
-            type="button"
-            className="add-coin-btn"
-            aria-expanded={showAdd}
-            onClick={() => setShowAdd((s) => !s)}
-          >
-            + Add coin
-          </button>
-          <span className="meta-row__text">
-            {hasCatalog ? `${visible.length} of ${watchlist.ids.length} tracked` : ""}
-          </span>
-        </div>
-        <span className="meta-row__text">⠿ drag to reorder · × to remove</span>
+      <div className="hint-row">
+        <span className="hint-row__text">⠿ drag to reorder · hover a card to remove</span>
       </div>
 
       {showAdd && hasCatalog && (
-        <div className="add-panel-wrap">
-          <AddCoinPanel
-            catalog={catalog}
-            has={watchlist.has}
-            onAdd={watchlist.add}
-            onClose={() => setShowAdd(false)}
-          />
-        </div>
+        <AddCoinPanel
+          catalog={catalog}
+          has={watchlist.has}
+          onAdd={watchlist.add}
+          onClose={() => setShowAdd(false)}
+        />
       )}
 
       <div className="body">

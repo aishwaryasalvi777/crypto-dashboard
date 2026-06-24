@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { filterCoins } from "~/lib/order";
 import { formatUsd } from "~/lib/crypto/format";
@@ -13,58 +13,81 @@ interface AddCoinPanelProps {
   onClose: () => void;
 }
 
-const MAX_RESULTS = 40;
+const MAX_RESULTS = 50;
 
-/** Search the market catalog and add coins to the watchlist. Coins already added are excluded. */
+/** Centered modal to search the market catalog and add coins. Coins already tracked are excluded. */
 export function AddCoinPanel({ catalog, has, onAdd, onClose }: AddCoinPanelProps) {
   const [query, setQuery] = useState("");
 
-  const results = useMemo(() => {
-    const notAdded = catalog.filter((c) => !has(c.id));
-    return filterCoins(notAdded, query).slice(0, MAX_RESULTS);
-  }, [catalog, has, query]);
+  // Close on Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const notAdded = useMemo(() => catalog.filter((c) => !has(c.id)), [catalog, has]);
+  const results = useMemo(
+    () => filterCoins(notAdded, query).slice(0, MAX_RESULTS),
+    [notAdded, query],
+  );
+
+  const emptyMsg =
+    notAdded.length === 0
+      ? "You're already tracking every coin in the catalog."
+      : `No coins match “${query}”.`;
 
   return (
-    <div className="add-panel">
-      <div className="add-panel__head">
-        <div className="search" style={{ flex: 1 }}>
-          <span className="search__icon" aria-hidden>
-            ⌕
-          </span>
-          <input
-            className="search__input"
-            type="search"
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search coins to add (name or symbol)…"
-            aria-label="Search coins to add"
-          />
+    <div className="modal-scrim" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a coin"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal__head">
+          <div className="modal__title">Add a coin</div>
+          <button type="button" className="modal__close" title="Close" aria-label="Close" onClick={onClose}>
+            ✕
+          </button>
         </div>
-        <button type="button" className="icon-btn" title="Close" aria-label="Close" onClick={onClose}>
-          ×
-        </button>
-      </div>
 
-      {results.length === 0 ? (
-        <div className="add-panel__empty">No coins match “{query}”.</div>
-      ) : (
-        <div className="add-panel__list">
-          {results.map((coin, i) => (
-            <div className="add-row" key={coin.id}>
-              <CoinAvatar symbol={coin.symbol} index={i} size={28} />
-              <div className="coin-id" style={{ flex: 1 }}>
-                <div className="coin-id__name">{coin.name}</div>
-                <div className="coin-id__symbol">{coin.symbol}</div>
-              </div>
-              <span className="add-row__price tabular grotesk">{formatUsd(coin.priceUsd)}</span>
-              <button type="button" className="add-row__btn" onClick={() => onAdd(coin.id)}>
-                + Add
-              </button>
-            </div>
-          ))}
+        <div className="modal__search">
+          <div className="search">
+            <span className="search__icon" aria-hidden>
+              ⌕
+            </span>
+            <input
+              className="search__input"
+              type="search"
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search coins to add…"
+              aria-label="Search coins to add"
+            />
+          </div>
         </div>
-      )}
+
+        <div className="modal__list">
+          {results.length === 0 ? (
+            <div className="modal__empty">{emptyMsg}</div>
+          ) : (
+            results.map((coin, i) => (
+              <button type="button" className="add-row" key={coin.id} onClick={() => onAdd(coin.id)}>
+                <CoinAvatar symbol={coin.symbol} index={i} size={32} />
+                <span className="coin-id" style={{ flex: 1 }}>
+                  <span className="coin-id__name">{coin.name}</span>
+                  <span className="coin-id__symbol">{coin.symbol}</span>
+                </span>
+                <span className="add-row__price tabular grotesk">{formatUsd(coin.priceUsd)}</span>
+                <span className="add-row__cta">+ Add</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -81,10 +81,6 @@ export default function Login() {
             {submitting ? "Signing in…" : "Sign in"}
           </button>
         </Form>
-
-        <p className="auth__hint">
-          Demo credentials come from your <code>.env</code> (defaults: admin / password).
-        </p>
       </div>
     </main>
   );
