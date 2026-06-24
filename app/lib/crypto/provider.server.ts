@@ -3,6 +3,7 @@ import type { MarketsResult } from "./types";
 import { createMockProvider } from "./mock.provider.server";
 import { createCoinGeckoProvider } from "./coingecko.provider.server";
 import { createCoinbaseProvider } from "./coinbase.provider.server";
+import { createHybridProvider } from "./hybrid.provider.server";
 
 /**
  * The seam. Every data source implements this; the UI and loader depend only on it.
@@ -13,28 +14,43 @@ export interface CryptoProvider {
   getMarkets(): Promise<MarketsResult>;
 }
 
-export type ProviderName = "mock" | "coinbase" | "coingecko";
+export type ProviderName = "mock" | "coinbase" | "coingecko" | "hybrid";
 
 /** The provider that will serve the current request — also used to label results/errors. */
 export function getActiveProviderName(): ProviderName {
-  const raw = (process.env.CRYPTO_PROVIDER || "coinbase").toLowerCase();
+  const raw = (process.env.CRYPTO_PROVIDER || "hybrid").toLowerCase();
   if (raw === "mock") return "mock";
   if (raw === "coingecko") return "coingecko";
-  return "coinbase";
+  if (raw === "coinbase") return "coinbase";
+  return "hybrid";
+}
+
+function coinbaseConfig() {
+  return {
+    baseUrl: process.env.COINBASE_API_BASE || "https://api.coinbase.com",
+    apiKey: process.env.COINBASE_API_KEY || undefined,
+  };
+}
+
+function coingeckoConfig() {
+  return {
+    baseUrl: process.env.COINGECKO_API_BASE || "https://api.coingecko.com/api/v3",
+    apiKey: process.env.COINGECKO_API_KEY || undefined,
+  };
 }
 
 export function getCryptoProvider(): CryptoProvider {
   switch (getActiveProviderName()) {
+    case "hybrid":
+      // Coinbase = price/BTC authority, CoinGecko = 24h change + sparkline enrichment.
+      return createHybridProvider(
+        createCoinbaseProvider(coinbaseConfig()),
+        createCoinGeckoProvider(coingeckoConfig()),
+      );
     case "coinbase":
-      return createCoinbaseProvider({
-        baseUrl: process.env.COINBASE_API_BASE || "https://api.coinbase.com",
-        apiKey: process.env.COINBASE_API_KEY || undefined,
-      });
+      return createCoinbaseProvider(coinbaseConfig());
     case "coingecko":
-      return createCoinGeckoProvider({
-        baseUrl: process.env.COINGECKO_API_BASE || "https://api.coingecko.com/api/v3",
-        apiKey: process.env.COINGECKO_API_KEY || undefined,
-      });
+      return createCoinGeckoProvider(coingeckoConfig());
     case "mock":
     default:
       return createMockProvider();

@@ -131,7 +131,7 @@ Open http://localhost:3000 and log in with your `.env` credentials.
 | `SESSION_SECRET` | _(required)_ | Secret that signs the session cookie. Use a long random string. |
 | `AUTH_USERNAME` | `admin` | Login username (temporary, env-based credentials). |
 | `AUTH_PASSWORD` | `password` | Login password. **Change before any real use.** |
-| `CRYPTO_PROVIDER` | `coinbase` | Data source: `coinbase` (live, default), `coingecko` (live + 24h change & sparklines), or `mock` (offline demo data). |
+| `CRYPTO_PROVIDER` | `hybrid` | Data source: `hybrid` (default — Coinbase prices + CoinGecko 24h change & sparklines), `coinbase`, `coingecko`, or `mock` (offline demo data). |
 | `COINBASE_API_BASE` | `https://api.coinbase.com` | Coinbase API base URL. |
 | `COINBASE_API_KEY` | _(empty)_ | **Not required** for public exchange rates — reserved for future authenticated features. Leave blank. |
 | `COINGECKO_API_BASE` | `https://api.coingecko.com/api/v3` | Override for CoinGecko Pro / proxy. |
@@ -157,11 +157,14 @@ routes/dashboard.tsx  (loader — runs on the server, behind the auth guard)
              └─ returns Coin[]         ← normalized domain model (raw numbers only)
 ```
 
-- **`coinbase`** (default) — `GET /v2/exchange-rates?currency=USD`. One keyless request returns the
-  rate of every currency per USD; we derive `priceUsd = 1 / rate[coin]` and
+- **`hybrid`** (default) — **Coinbase** is the authority for USD price + BTC rate (the brief's
+  required Coinbase data); **CoinGecko** enriches each coin with 24h change + 7-day sparkline,
+  merged by coin id. Resilient via `Promise.allSettled`: if CoinGecko is down you still get Coinbase
+  prices (badge/sparkline degrade per coin); if Coinbase is down it falls back to CoinGecko (which
+  also has price + BTC); only if **both** fail does the error state show.
+- **`coinbase`** — `GET /v2/exchange-rates?currency=USD`. Keyless; `priceUsd = 1 / rate[coin]`,
   `priceBtc = rate[BTC] / rate[coin]`. No 24h change / sparkline (not exposed publicly).
-- **`coingecko`** — `coins/markets`: USD price, 24h change, and 7-day sparkline in one call. Use
-  this for the full visual design.
+- **`coingecko`** — `coins/markets`: USD price, 24h change, and 7-day sparkline in one call.
 - **`mock`** — deterministic offline dataset (12 coins, seeded sparklines). No network or keys;
   also backs the error-state "Load demo data" button.
 
@@ -197,12 +200,13 @@ JWT, a users table) without changing the UI.
 
 ## Decisions & tradeoffs
 
-- **Coinbase as the default live source.** The brief specifies the Coinbase API, and its public
-  `exchange-rates` endpoint returns every required field (name, symbol, USD rate, BTC rate) in one
-  keyless call. Tradeoff: Coinbase's public API has **no 24h change or price history**, so those
-  visuals degrade gracefully under `coinbase` (badge/sparkline omitted). **CoinGecko** stays wired
-  (`CRYPTO_PROVIDER=coingecko`) for the full visual design. All sources sit behind one interface, so
-  switching is a single env var.
+- **Hybrid (Coinbase + CoinGecko) as the default live source.** The brief specifies the Coinbase
+  API, so Coinbase remains the authority for the required USD + BTC rates; CoinGecko enriches each
+  coin with 24h change + sparkline so the full visual design renders. They're combined in a
+  `hybrid` provider behind the same `CryptoProvider` seam, with `Promise.allSettled` graceful
+  degradation (one source down → still works). Tradeoff: two upstream calls per refresh (bounded by
+  the 12s cache) and a minor source mix (Coinbase price, CoinGecko %). `coinbase`, `coingecko`, and
+  `mock` remain selectable via one env var.
 - **Mock-first, "integrate APIs later."** Honoring the brief's note that integrations come later,
   the app ships fully functional on deterministic mock data — runs offline, in CI, with zero setup.
 - **Server-side fetching in the loader** (vs. the design's client `fetch`). Idiomatic Remix: keeps

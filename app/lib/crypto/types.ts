@@ -27,5 +27,5 @@ export interface Coin {
 export interface MarketsResult {
   coins: Coin[];
   /** Source that produced the data, surfaced for debugging / the UI. */
-  source: "mock" | "coingecko" | "coinbase";
+  source: "mock" | "coingecko" | "coinbase" | "hybrid";
 }
