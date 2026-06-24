@@ -48,9 +48,7 @@ that persists, and session-based authentication.
 
 ---
 
-## Features
 
-````markdown
 ## Features
 
 | Feature | Status |
@@ -71,7 +69,7 @@ that persists, and session-based authentication.
 | 24h change badges + 7-day sparklines | ✅ (hybrid / coingecko) |
 | Empty-search state, accessible focus styles, tabular-figure prices | ✅ DONE |
 | Pluggable data-provider layer | ✅ swap the live API without touching the UI |
-````
+
 ---
 
 ## Tech stack
