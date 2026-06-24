@@ -4,7 +4,7 @@
  * (see CLAUDE.md §2: "numbers in the model, strings at the edge").
  */
 export interface Coin {
-  /** Stable provider id, used as the drag/persistence key (e.g. "bitcoin"). */
+  /** Universal identity = the uppercase symbol (equals `symbol`). Drag/watchlist/persistence key. */
   id: string;
   /** Uppercase ticker (e.g. "BTC"). */
   symbol: string;
@@ -27,5 +27,5 @@ export interface Coin {
 export interface MarketsResult {
   coins: Coin[];
   /** Source that produced the data, surfaced for debugging / the UI. */
-  source: "mock" | "coingecko" | "coinbase" | "hybrid";
+  source: "coingecko" | "coinbase" | "hybrid";
 }

@@ -54,12 +54,13 @@ that persists, and session-based authentication.
 | --- | --- |
 | Card order persisted to `localStorage` | ✅ survives reload |
 | Dark / light mode toggle | ✅ persisted, SSR-safe (no flash) |
-| Loading + error states | ✅ skeletons, error + retry, "load demo data" fallback |
+| Loading + error states | ✅ skeletons, error + retry |
 | User authentication | ✅ env credentials + signed cookie session |
 | Unit tests | ✅ 35 tests (Vitest) |
+| **Customizable watchlist** | ✅ search the top-250 market, **add / remove** coins, persisted (`localStorage`), default = 12 |
 | Real coin logos | ✅ color SVGs w/ graceful initial-letter fallback |
 | Grid / list view toggle | ✅ persisted |
-| 24h change badges + 7-day sparklines | ✅ (shown under `coingecko`/`mock`; see tradeoffs) |
+| 24h change badges + 7-day sparklines | ✅ (hybrid / coingecko) |
 | Empty-search state, accessible focus styles, tabular-figure prices | ✅ |
 | Pluggable data-provider layer | ✅ swap the live API without touching the UI |
 
@@ -121,6 +122,7 @@ Open http://localhost:3000 and log in with your `.env` credentials.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Run unit tests once |
 | `npm run test:watch` | Run unit tests in watch mode |
+| `npm run check:coins` | Live guard — fails if a tracked coin's symbol stops resolving on either API |
 
 ---
 
@@ -131,7 +133,7 @@ Open http://localhost:3000 and log in with your `.env` credentials.
 | `SESSION_SECRET` | _(required)_ | Secret that signs the session cookie. Use a long random string. |
 | `AUTH_USERNAME` | `admin` | Login username (temporary, env-based credentials). |
 | `AUTH_PASSWORD` | `password` | Login password. **Change before any real use.** |
-| `CRYPTO_PROVIDER` | `hybrid` | Data source: `hybrid` (default — Coinbase prices + CoinGecko 24h change & sparklines), `coinbase`, `coingecko`, or `mock` (offline demo data). |
+| `CRYPTO_PROVIDER` | `hybrid` | Live data source: `hybrid` (default — CoinGecko catalog + Coinbase prices), `coinbase`, or `coingecko`. |
 | `COINBASE_API_BASE` | `https://api.coinbase.com` | Coinbase API base URL. |
 | `COINBASE_API_KEY` | _(empty)_ | **Not required** for public exchange rates — reserved for future authenticated features. Leave blank. |
 | `COINGECKO_API_BASE` | `https://api.coingecko.com/api/v3` | Override for CoinGecko Pro / proxy. |
@@ -153,21 +155,19 @@ interface, so the UI never knows or cares where prices come from:
 ```
 routes/dashboard.tsx  (loader — runs on the server, behind the auth guard)
    └─ getCryptoProvider()              ← factory reads CRYPTO_PROVIDER
-        └─ provider.getMarkets()       ← coinbase | coingecko | mock
+        └─ provider.getMarkets()       ← hybrid | coinbase | coingecko
              └─ returns Coin[]         ← normalized domain model (raw numbers only)
 ```
 
-- **`hybrid`** (default) — **Coinbase** is the authority for USD price + BTC rate (the brief's
-  required Coinbase data); **CoinGecko** enriches each coin with 24h change + 7-day sparkline,
-  merged by coin id. Resilient via `Promise.allSettled`: if CoinGecko is down you still get Coinbase
-  prices (badge/sparkline degrade per coin); if Coinbase is down it falls back to CoinGecko (which
-  also has price + BTC); only if **both** fail does the error state show.
+- **`hybrid`** (default) — **CoinGecko** supplies the full searchable **catalog** (top-250 markets,
+  with 24h change + 7-day sparkline); **Coinbase** prices are **overlaid** for every symbol it
+  quotes, so Coinbase stays the USD/BTC authority for those coins (the brief's requirement) while
+  CoinGecko covers the long tail you can search/add. Resilient via `Promise.allSettled`: Coinbase
+  down → catalog with CoinGecko prices; CoinGecko down → Coinbase-priced default watchlist; both
+  down → error state.
 - **`coinbase`** — `GET /v2/exchange-rates?currency=USD`. Keyless; `priceUsd = 1 / rate[coin]`,
   `priceBtc = rate[BTC] / rate[coin]`. No 24h change / sparkline (not exposed publicly).
 - **`coingecko`** — `coins/markets`: USD price, 24h change, and 7-day sparkline in one call.
-- **`mock`** — deterministic offline dataset (12 coins, seeded sparklines). No network or keys;
-  also backs the error-state "Load demo data" button.
-
 Manual refresh and auto-refresh re-run the loader via Remix's `useRevalidator` — data fetching
 stays on the server; the client just re-renders.
 
@@ -177,12 +177,21 @@ stays on the server; the client just re-renders.
 `sparkline`). All display formatting (`$`, `₿`, `%`, SVG sparkline points, logo URLs) lives in pure,
 unit-tested functions in `format.ts`. Principle: **numbers in the model, strings at the edge.**
 
-### Client state
+### Client state & the watchlist
 
-Filter, view (grid/list), theme, and card order are client state. Order, theme, and view persist to
-`localStorage` (`cd_order`, `cd_theme`, `cd_view`) via an SSR-safe `useLocalStorage` hook. Theme is
-applied pre-paint by a tiny inline script (`data-theme` on `<html>`) to avoid a flash. Card order is
-an array of coin ids that's reconciled with each refresh (new coins appended, removed coins dropped).
+Filter, view (grid/list), theme, and the **watchlist** are client state, persisted to `localStorage`
+(`cd_watchlist`, `cd_theme`, `cd_view`) via an SSR-safe `useLocalStorage` hook. Theme is applied
+pre-paint by a tiny inline script (`data-theme` on `<html>`) to avoid a flash.
+
+The **watchlist** is an ordered array of coin ids (symbols) — it's both *which* coins you track and
+*their order*. The loader returns the whole top-250 **catalog**; the client shows the watchlist
+subset, lets you **search the catalog and add** any coin (`+ Add coin`), **remove** any card (×), and
+**drag to reorder** — all persisted. A new user starts at the default 12; the watchlist is reconciled
+against the catalog on refresh so stale entries drop out. Pure logic lives in `lib/watchlist.ts`; the
+React shell is `hooks/useWatchlist.ts`.
+
+> Tradeoff: the loader ships the full catalog (~250 coins) so search/add is instant with no extra
+> round-trips; sparklines are down-sampled server-side to keep the payload small (≈50 KB gzipped).
 
 ### Authentication
 
@@ -205,10 +214,10 @@ JWT, a users table) without changing the UI.
   coin with 24h change + sparkline so the full visual design renders. They're combined in a
   `hybrid` provider behind the same `CryptoProvider` seam, with `Promise.allSettled` graceful
   degradation (one source down → still works). Tradeoff: two upstream calls per refresh (bounded by
-  the 12s cache) and a minor source mix (Coinbase price, CoinGecko %). `coinbase`, `coingecko`, and
-  `mock` remain selectable via one env var.
-- **Mock-first, "integrate APIs later."** Honoring the brief's note that integrations come later,
-  the app ships fully functional on deterministic mock data — runs offline, in CI, with zero setup.
+  the 12s cache) and a minor source mix (Coinbase price, CoinGecko %). `coinbase` and `coingecko`
+  remain selectable via one env var.
+- **All-live (no mock).** The app runs entirely on live data. Unit tests stay offline via fixtures
+  and injected fakes (not a runtime mock source), so CI needs no network or keys.
 - **Server-side fetching in the loader** (vs. the design's client `fetch`). Idiomatic Remix: keeps
   API keys server-side, enables SSR, centralizes error handling; refresh uses `useRevalidator`.
 - **Native HTML5 drag-and-drop** over a library. The design already uses it; zero dependencies,
@@ -224,20 +233,48 @@ JWT, a users table) without changing the UI.
 
 ---
 
+## Coin-id drift — how it's handled
+
+**The risk.** Hardcoding provider-specific keys per coin is fragile: CoinGecko **renames ids**
+(Polygon's `matic-network` → `polygon-ecosystem-token`), Coinbase may not **quote** a symbol, and
+tickers can **collide**. A stale key would silently drop a coin's 24h badge / sparkline — easy to
+miss, and the risk grows as coins are added.
+
+**How it's resolved (implemented):**
+
+1. **Identity we own.** [`coins.ts`](app/lib/crypto/coins.ts) defines each coin as `{ id, symbol,
+   name }` where `id` is *our own* stable slug. Providers are matched to the live APIs **by symbol**,
+   never by a hardcoded provider id — so a CoinGecko id rename **self-heals** (we still match `pol`),
+   and the displayed id/name stay stable.
+2. **Top-market resolution.** The CoinGecko provider fetches the **top 250 markets by market cap** and
+   matches tracked coins by symbol; on a ticker collision the **highest-market-cap** coin wins.
+   Adding a coin = add one `{ id, symbol, name }` row — no provider id to rot.
+3. **Guard against drift.** `npm run check:coins` hits both live APIs and **fails** if any tracked
+   symbol stops resolving on Coinbase or CoinGecko — so drift surfaces loudly (run it in CI) instead
+   of as a silently graph-less card. It's a Vitest test, skipped in the default offline `npm test`.
+
+Result: all 12 coins (incl. Polygon, now `POL`) render fully, and future coins are a one-line add.
+Tradeoff: the CoinGecko call returns the top 250 (larger payload than 12), bounded by the 12s cache.
+
+---
+
 ## Testing
 
 ```bash
 npm test
 ```
 
-**35 unit tests (Vitest)** cover the logic that matters most and is DOM-independent:
+**61 unit tests (Vitest)** cover the logic that matters most and is DOM-independent:
 
 - `format.ts` — USD/BTC/percent formatting, sparkline geometry, logo URLs, avatar helpers
 - `order.ts` — order reconciliation, drag-move, filtering by name/symbol
-- providers — mock dataset shape/determinism, Coinbase rate normalization (USD + BTC math)
-- `auth.server.ts` — credential verification
+- providers — Coinbase + CoinGecko normalization (symbol matching, BTC math, id-rename self-heal,
+  collisions), hybrid overlay + all fallback paths; watchlist add/remove/reconcile
+- `cache.server.ts` — TTL cache hit/dedup/expiry; `auth.server.ts` — credential verify + fail-closed
 
-CI-friendly: tests use the mock provider, so they need no network or API keys.
+CI-friendly: the default suite uses no network or keys. A separate live guard,
+`npm run check:coins`, hits both APIs and fails if any tracked coin's symbol stops resolving — run
+it in CI to catch coin drift before deploy (skipped in the offline `npm test`).
 
 ---
 
@@ -273,7 +310,7 @@ seams. Full detail in [CLAUDE.md](./CLAUDE.md); the essentials:
 5. **Theme values are CSS custom properties under `[data-theme]`** — keep both themes in sync; no
    inline colors.
 6. **Add a test with each logic change**, and run `npm run typecheck && npm test` before declaring
-   done. Keep the offline path working: `CRYPTO_PROVIDER=mock` must run with no network or keys.
+   done. Keep unit tests offline (fixtures/fakes, no network) so CI stays green without keys.
 
 `CLAUDE.md` also tracks **what's done, what's deferred, and a ready backlog** (watchlists, WebSocket
 prices, per-coin detail pages, sortable columns, currency selector, real multi-user auth) with
@@ -291,11 +328,12 @@ app/
 │   ├── login.tsx            # login form + action
 │   ├── logout.tsx           # logout action
 │   └── dashboard.tsx        # protected; loader fetches markets
-├── components/              # Header, Controls, CoinCard/Row, CoinAvatar, Sparkline, states…
-├── hooks/                   # useLocalStorage, useTheme, useCardOrder, useAutoRefresh
+├── components/              # Header, Controls, CoinCard/Row, CoinAvatar, AddCoinPanel, states…
+├── hooks/                   # useLocalStorage, useTheme, useWatchlist, useAutoRefresh
 ├── lib/
 │   ├── auth/                # session + credential auth (server-only)
-│   ├── crypto/              # types, provider interface, coinbase/coingecko/mock, formatting
+│   ├── crypto/              # types, provider interface, hybrid/coinbase/coingecko, cache, format
+│   ├── watchlist.ts         # add/remove/reconcile (pure)
 │   └── theme.ts             # theme tokens + types
 └── styles/app.css           # design tokens + component styles
 tests/                       # Vitest unit tests

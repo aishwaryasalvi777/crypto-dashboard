@@ -1,23 +1,20 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { useLoaderData, useNavigation } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 
+import { AddCoinPanel } from "~/components/AddCoinPanel";
 import { CoinCard } from "~/components/CoinCard";
 import { CoinRow } from "~/components/CoinRow";
 import { Controls, type ViewMode } from "~/components/Controls";
 import { Header } from "~/components/Header";
 import { EmptyState, ErrorState, SkeletonGrid } from "~/components/states";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
-import { useCardOrder } from "~/hooks/useCardOrder";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { useTheme } from "~/hooks/useTheme";
+import { useWatchlist } from "~/hooks/useWatchlist";
 import { requireUserId } from "~/lib/auth/auth.server";
-import {
-  getActiveProviderName,
-  getMarketsCached,
-  getMockProvider,
-} from "~/lib/crypto/provider.server";
+import { getActiveProviderName, getMarketsCached } from "~/lib/crypto/provider.server";
 import { filterCoins, orderCoins } from "~/lib/order";
 
 export const meta: MetaFunction = () => [{ title: "Tessera — Crypto Dashboard" }];
@@ -26,17 +23,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await requireUserId(request);
 
   const refreshSeconds = clampRefresh(Number(process.env.REFRESH_SECONDS) || 30);
-  const useDemo = new URL(request.url).searchParams.get("demo") === "1";
 
   try {
-    const { coins, source } = useDemo
-      ? await getMockProvider().getMarkets()
-      : await getMarketsCached();
+    const { coins, source } = await getMarketsCached();
     return json({ coins, source, error: null as string | null, refreshSeconds });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Network error — check your connection.";
-    const source = useDemo ? ("mock" as const) : getActiveProviderName();
-    return json({ coins: [], source, error: message, refreshSeconds });
+    return json({ coins: [], source: getActiveProviderName(), error: message, refreshSeconds });
   }
 }
 
@@ -45,41 +38,40 @@ function clampRefresh(n: number): number {
 }
 
 export default function Dashboard() {
-  const { coins, error, refreshSeconds } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
+  const { coins: catalog, error, refreshSeconds } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   const [theme, toggleTheme] = useTheme();
   const { refresh, auto, toggleAuto, isRefreshing } = useAutoRefresh(refreshSeconds);
 
   const [query, setQuery] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
   const [view, setView] = useLocalStorage<ViewMode>("cd_view", "grid", (raw) =>
     raw === "grid" || raw === "list" ? raw : undefined,
   );
 
-  const ids = useMemo(() => coins.map((c) => c.id), [coins]);
-  const order = useCardOrder(ids);
+  const catalogIds = useMemo(() => catalog.map((c) => c.id), [catalog]);
+  const watchlist = useWatchlist(catalogIds);
 
   // Client-side "last updated" timestamp (avoids SSR/client time mismatch).
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   useEffect(() => {
-    if (coins.length) setLastUpdated(Date.now());
-  }, [coins]);
+    if (catalog.length) setLastUpdated(Date.now());
+  }, [catalog]);
 
-  const visible = useMemo(
-    () => filterCoins(orderCoins(coins, order.order), query),
-    [coins, order.order, query],
-  );
+  const chosen = useMemo(() => orderCoins(catalog, watchlist.ids), [catalog, watchlist.ids]);
+  const visible = useMemo(() => filterCoins(chosen, query), [chosen, query]);
 
-  const hasData = coins.length > 0;
+  const hasCatalog = catalog.length > 0;
   const isNavigating = navigation.state === "loading";
-  const isLoading = !hasData && !error && isNavigating;
-  const isError = !hasData && !!error;
-  const isEmpty = hasData && visible.length === 0;
-  const showGrid = hasData && !isEmpty && view === "grid";
-  const showList = hasData && !isEmpty && view === "list";
+  const isLoading = !hasCatalog && !error && isNavigating;
+  const isError = !hasCatalog && !!error;
+  const watchlistEmpty = hasCatalog && watchlist.ids.length === 0;
+  const filterEmpty = hasCatalog && !watchlistEmpty && visible.length === 0;
+  const showGrid = hasCatalog && !watchlistEmpty && !filterEmpty && view === "grid";
+  const showList = hasCatalog && !watchlistEmpty && !filterEmpty && view === "list";
 
-  const updatedLabel = isRefreshing && hasData
+  const updatedLabel = isRefreshing && hasCatalog
     ? "Updating…"
     : lastUpdated
       ? `Updated ${new Date(lastUpdated).toLocaleTimeString("en-US")}`
@@ -100,29 +92,59 @@ export default function Dashboard() {
       <Controls query={query} view={view} onQueryChange={setQuery} onViewChange={setView} />
 
       <div className="meta-row">
-        <span className="meta-row__text">
-          {hasData ? `${visible.length} of ${coins.length} assets` : ""}
-        </span>
-        <span className="meta-row__text">⠿ drag a card to reorder</span>
+        <div className="meta-row__left">
+          <button
+            type="button"
+            className="add-coin-btn"
+            aria-expanded={showAdd}
+            onClick={() => setShowAdd((s) => !s)}
+          >
+            + Add coin
+          </button>
+          <span className="meta-row__text">
+            {hasCatalog ? `${visible.length} of ${watchlist.ids.length} tracked` : ""}
+          </span>
+        </div>
+        <span className="meta-row__text">⠿ drag to reorder · × to remove</span>
       </div>
+
+      {showAdd && hasCatalog && (
+        <div className="add-panel-wrap">
+          <AddCoinPanel
+            catalog={catalog}
+            has={watchlist.has}
+            onAdd={watchlist.add}
+            onClose={() => setShowAdd(false)}
+          />
+        </div>
+      )}
 
       <div className="body">
         {isLoading && <SkeletonGrid />}
 
-        {isError && (
-          <ErrorState
-            message={error}
-            onRetry={refresh}
-            onLoadDemo={() => navigate("/dashboard?demo=1")}
-          />
+        {isError && <ErrorState message={error} onRetry={refresh} />}
+
+        {watchlistEmpty && (
+          <div className="empty">
+            <div className="empty__title">Your watchlist is empty</div>
+            <div className="empty__sub">
+              Click <strong>+ Add coin</strong> to search the market and build your view.
+            </div>
+          </div>
         )}
 
-        {isEmpty && <EmptyState query={query} />}
+        {filterEmpty && <EmptyState query={query} />}
 
         {showGrid && (
           <div className="grid">
-            {visible.map((coin) => (
-              <CoinCard key={coin.id} coin={coin} index={ids.indexOf(coin.id)} order={order} />
+            {visible.map((coin, i) => (
+              <CoinCard
+                key={coin.id}
+                coin={coin}
+                index={i}
+                drag={watchlist}
+                onRemove={watchlist.remove}
+              />
             ))}
           </div>
         )}
@@ -138,9 +160,16 @@ export default function Dashboard() {
                   <span className="right">Price (USD)</span>
                   <span className="right">24h</span>
                   <span className="right">vs BTC</span>
+                  <span />
                 </div>
-                {visible.map((coin) => (
-                  <CoinRow key={coin.id} coin={coin} index={ids.indexOf(coin.id)} order={order} />
+                {visible.map((coin, i) => (
+                  <CoinRow
+                    key={coin.id}
+                    coin={coin}
+                    index={i}
+                    drag={watchlist}
+                    onRemove={watchlist.remove}
+                  />
                 ))}
               </div>
             </div>

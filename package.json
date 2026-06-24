@@ -9,7 +9,8 @@
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:coins": "CHECK_COINS=1 vitest run tests/coins.guard.test.ts"
   },
   "dependencies": {
     "@remix-run/node": "^2.15.2",

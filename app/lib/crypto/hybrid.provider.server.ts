@@ -1,55 +1,67 @@
 import type { CryptoProvider } from "./provider.server";
+import type { CoinbasePrice } from "./coinbase.provider.server";
+import { DEFAULT_WATCHLIST, displayName } from "./coins";
 import type { Coin, MarketsResult } from "./types";
 
+type GetCatalog = () => Promise<MarketsResult>;
+type GetCoinbasePrices = () => Promise<Map<string, CoinbasePrice>>;
+
 /**
- * Combine two sources to get the best of both: the `primary` (Coinbase) is the authority for
- * price + BTC rate (the brief's required Coinbase data), enriched with the `enricher`'s
- * (CoinGecko's) 24h change + 7-day sparkline. Behind the same `CryptoProvider` seam, so the UI
- * is unchanged.
+ * The default provider. CoinGecko supplies the full searchable **catalog** (top markets, with 24h
+ * change + sparkline); Coinbase's prices are **overlaid** for every symbol it quotes, so Coinbase
+ * stays the USD/BTC authority for those coins (the brief's requirement) while CoinGecko covers the
+ * long tail + chart data.
  *
  * Resilience (`Promise.allSettled`):
- *  - both ok        → merged (Coinbase prices + CoinGecko charts)
- *  - enricher fails → primary only (badge/sparkline degrade, prices still shown)
- *  - primary fails  → enricher only (CoinGecko also has price + BTC)
- *  - both fail      → throw (loader shows the error state)
+ *  - both ok          → catalog with Coinbase prices overlaid
+ *  - Coinbase fails   → catalog with CoinGecko prices (still fully usable)
+ *  - CoinGecko fails  → Coinbase-priced default watchlist (no catalog/charts, but live prices)
+ *  - both fail        → throw (loader shows the error state)
  */
 export function createHybridProvider(
-  primary: CryptoProvider,
-  enricher: CryptoProvider,
+  getCatalog: GetCatalog,
+  getCoinbasePrices: GetCoinbasePrices,
 ): CryptoProvider {
   return {
     async getMarkets(): Promise<MarketsResult> {
-      const [base, extra] = await Promise.allSettled([
-        primary.getMarkets(),
-        enricher.getMarkets(),
-      ]);
+      const [cat, cb] = await Promise.allSettled([getCatalog(), getCoinbasePrices()]);
+      const prices = cb.status === "fulfilled" ? cb.value : null;
 
-      if (base.status === "fulfilled" && extra.status === "fulfilled") {
-        return { coins: mergeMarkets(base.value.coins, extra.value.coins), source: "hybrid" };
+      if (cat.status === "fulfilled") {
+        const coins = prices ? overlayPrices(cat.value.coins, prices) : cat.value.coins;
+        return { coins, source: "hybrid" };
       }
-      if (base.status === "fulfilled") {
-        return { coins: base.value.coins, source: "hybrid" };
+      if (prices) {
+        return { coins: defaultFromPrices(prices), source: "hybrid" };
       }
-      if (extra.status === "fulfilled") {
-        return { coins: extra.value.coins, source: "hybrid" };
-      }
-      throw base.reason instanceof Error
-        ? base.reason
-        : new Error("Both price sources failed.");
+      throw cat.reason instanceof Error ? cat.reason : new Error("Both price sources failed.");
     },
   };
 }
 
-/**
- * Use `base` (price authority) as the canonical list, overlaying each coin's `change24h` and
- * `sparkline` from the matching `enrich` coin (by id). Coins absent from `enrich` keep their own
- * values (e.g. Coinbase's null/empty), so the badge/sparkline simply don't render for them.
- */
-export function mergeMarkets(base: Coin[], enrich: Coin[]): Coin[] {
-  const byId = new Map(enrich.map((c) => [c.id, c]));
-  return base.map((coin) => {
-    const extra = byId.get(coin.id);
-    if (!extra) return coin;
-    return { ...coin, change24h: extra.change24h, sparkline: extra.sparkline };
+/** Replace each catalog coin's USD/BTC price with Coinbase's where Coinbase quotes the symbol. */
+export function overlayPrices(catalog: Coin[], prices: Map<string, CoinbasePrice>): Coin[] {
+  return catalog.map((coin) => {
+    const p = prices.get(coin.symbol);
+    return p ? { ...coin, priceUsd: p.priceUsd, priceBtc: p.priceBtc } : coin;
+  });
+}
+
+/** Fallback when the catalog is unavailable: price the default watchlist from Coinbase alone. */
+export function defaultFromPrices(prices: Map<string, CoinbasePrice>): Coin[] {
+  return DEFAULT_WATCHLIST.flatMap((symbol): Coin[] => {
+    const p = prices.get(symbol);
+    if (!p) return [];
+    return [
+      {
+        id: symbol,
+        symbol,
+        name: displayName(symbol, symbol),
+        priceUsd: p.priceUsd,
+        priceBtc: p.priceBtc,
+        change24h: null,
+        sparkline: [],
+      },
+    ];
   });
 }
