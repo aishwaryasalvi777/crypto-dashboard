@@ -8,9 +8,6 @@ that persists, and session-based authentication.
 
 🔗 **Live demo:** https://crypto-currency-canvas.netlify.app 
 
-> 📖 For a single, consolidated record of the project — what it is, every decision, and the full
-> build/deploy history — see [documentation.md](./documentation.md). 
-
 <!-- Add screenshots before submitting:
 ![Dark mode — grid view](docs/screenshot-grid-dark.png)
 ![Light mode — list view](docs/screenshot-list-light.png)
