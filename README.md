@@ -56,9 +56,9 @@ that persists, and session-based authentication.
 | --- | --- |
 | Responsive card layout, 10+ coins (name, symbol, USD rate, BTC rate) | ✅ 12 coins |
 | Dynamic data fetching on page load | ✅ Remix `loader` (server-side) |
-| Manual refresh **and** auto-refresh (configurable interval) | ✅ |
+| Manual refresh **and** auto-refresh (configurable interval) | ✅ DONE|
 | Drag-and-drop reordering, persists while on the page | ✅ native HTML5 DnD |
-| Filter by name or symbol | ✅ |
+| Filter by name or symbol | ✅ DONE |
 
 ### Bonus / extras
 
