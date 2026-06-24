@@ -4,6 +4,7 @@ import {
   avatarColor,
   avatarLetter,
   buildSparkline,
+  coinIconUrl,
   formatBtc,
   formatChange,
   formatUsd,
@@ -19,6 +20,11 @@ describe("formatUsd", () => {
   it("uses up to 6 decimals for sub-dollar prices", () => {
     expect(formatUsd(0.1234)).toBe("$0.1234");
     expect(formatUsd(0.523)).toBe("$0.523");
+  });
+
+  it("handles very cheap sub-cent tokens without collapsing to $0.00", () => {
+    expect(formatUsd(0.00001234)).toBe("$0.000012");
+    expect(formatUsd(0.0000005)).toBe("$0.000001");
   });
 
   it("handles invalid input", () => {
@@ -88,5 +94,10 @@ describe("avatar helpers", () => {
   it("takes the first letter, uppercased", () => {
     expect(avatarLetter("btc")).toBe("B");
     expect(avatarLetter("")).toBe("?");
+  });
+  it("builds a lowercase-symbol icon URL", () => {
+    expect(coinIconUrl("BTC")).toBe(
+      "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/btc.svg",
+    );
   });
 });

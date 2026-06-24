@@ -64,7 +64,9 @@ export function normalize(raw: CoinGeckoMarket[]): Coin[] {
       name: c.name,
       priceUsd,
       priceBtc: btcPrice && priceUsd ? priceUsd / btcPrice : 0,
-      change24h: c.price_change_percentage_24h ?? 0,
+      // Preserve a genuine null: the model distinguishes "unknown" from a flat 0% so the
+      // card can hide the badge rather than render a misleading "+0.00%".
+      change24h: c.price_change_percentage_24h ?? null,
       sparkline: c.sparkline_in_7d?.price ?? [],
     };
   });

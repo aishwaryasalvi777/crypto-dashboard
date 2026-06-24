@@ -1,13 +1,7 @@
 import type { CardOrder } from "~/hooks/useCardOrder";
-import {
-  avatarColor,
-  avatarLetter,
-  formatBtc,
-  formatChange,
-  formatUsd,
-  isPositive,
-} from "~/lib/crypto/format";
+import { formatBtc, formatChange, formatUsd, isPositive } from "~/lib/crypto/format";
 import type { Coin } from "~/lib/crypto/types";
+import { CoinAvatar } from "./CoinAvatar";
 import { dragProps } from "./dragProps";
 import { Sparkline } from "./Sparkline";
 
@@ -19,17 +13,15 @@ interface CoinCardProps {
 
 /** Grid-view card: avatar, name/symbol, USD price, 24h badge, sparkline, BTC rate. */
 export function CoinCard({ coin, index, order }: CoinCardProps) {
-  const hasChange = coin.change24h !== null;
+  const change = coin.change24h;
   const hasSpark = coin.sparkline.length > 0;
-  const positive = isPositive(coin.change24h ?? 0);
+  const positive = isPositive(change ?? 0);
   const sparkColor = positive ? "#16a34a" : "#ef4444";
 
   return (
     <div className="card" {...dragProps(coin.id, order)}>
       <div className="card__top">
-        <div className="avatar" style={{ background: avatarColor(index) }}>
-          {avatarLetter(coin.symbol)}
-        </div>
+        <CoinAvatar symbol={coin.symbol} index={index} size={34} />
         <div className="coin-id">
           <div className="coin-id__name">{coin.name}</div>
           <div className="coin-id__symbol">{coin.symbol}</div>
@@ -41,11 +33,11 @@ export function CoinCard({ coin, index, order }: CoinCardProps) {
 
       <div className="card__price">{formatUsd(coin.priceUsd)}</div>
 
-      {(hasChange || hasSpark) && (
+      {(change !== null || hasSpark) && (
         <div className="card__mid">
-          {hasChange ? (
+          {change !== null ? (
             <span className="change" data-positive={positive}>
-              {formatChange(coin.change24h as number)}
+              {formatChange(change)}
             </span>
           ) : (
             <span />

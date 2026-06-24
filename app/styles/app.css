@@ -657,3 +657,49 @@ input::placeholder {
   border-color: var(--accent);
   color: var(--text);
 }
+
+/* --- Responsive: small phones (~360–480px) -------------------------------- */
+@media (max-width: 480px) {
+  .header {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .header__actions {
+    gap: 8px;
+  }
+  /* The timestamp is the least essential header item — drop it when space is tight. */
+  .header__updated {
+    display: none;
+  }
+  .brand__title {
+    font-size: 16px;
+  }
+  .controls {
+    padding: 14px 16px 10px;
+    gap: 10px;
+  }
+  .meta-row {
+    padding: 0 16px 6px;
+  }
+  /* Drag hint is redundant on touch (no hover); reclaim the row width. */
+  .meta-row__text:last-child {
+    display: none;
+  }
+  .body {
+    padding: 12px 16px 32px;
+  }
+  /* Allow narrower cards so two-up still fits, then single-column on the smallest screens. */
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .card__price {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 360px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

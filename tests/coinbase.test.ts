@@ -36,4 +36,10 @@ describe("normalizeCoinbase", () => {
     expect(ids).toEqual(["bitcoin", "ethereum", "solana"]);
     expect(ids).not.toContain("dogecoin");
   });
+
+  it("falls back to priceBtc 0 when the BTC rate is missing, and skips BTC itself", () => {
+    const coins = normalizeCoinbase({ ETH: "0.0004", SOL: "0.01" });
+    expect(coins.map((c) => c.id)).toEqual(["ethereum", "solana"]); // no bitcoin row
+    for (const c of coins) expect(c.priceBtc).toBe(0);
+  });
 });

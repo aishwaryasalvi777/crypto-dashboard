@@ -13,7 +13,11 @@ import { useCardOrder } from "~/hooks/useCardOrder";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { useTheme } from "~/hooks/useTheme";
 import { requireUserId } from "~/lib/auth/auth.server";
-import { getCryptoProvider, getMockProvider } from "~/lib/crypto/provider.server";
+import {
+  getActiveProviderName,
+  getMarketsCached,
+  getMockProvider,
+} from "~/lib/crypto/provider.server";
 import { filterCoins, orderCoins } from "~/lib/order";
 
 export const meta: MetaFunction = () => [{ title: "Tessera — Crypto Dashboard" }];
@@ -23,14 +27,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const refreshSeconds = clampRefresh(Number(process.env.REFRESH_SECONDS) || 30);
   const useDemo = new URL(request.url).searchParams.get("demo") === "1";
-  const provider = useDemo ? getMockProvider() : getCryptoProvider();
 
   try {
-    const { coins, source } = await provider.getMarkets();
+    const { coins, source } = useDemo
+      ? await getMockProvider().getMarkets()
+      : await getMarketsCached();
     return json({ coins, source, error: null as string | null, refreshSeconds });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Network error — check your connection.";
-    return json({ coins: [], source: "coingecko" as const, error: message, refreshSeconds });
+    const source = useDemo ? ("mock" as const) : getActiveProviderName();
+    return json({ coins: [], source, error: message, refreshSeconds });
   }
 }
 

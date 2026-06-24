@@ -81,3 +81,12 @@ export function avatarColor(index: number): string {
 export function avatarLetter(symbol: string): string {
   return (symbol || "?").charAt(0).toUpperCase();
 }
+
+/**
+ * Real coin logo URL, keyed by ticker, from the jsdelivr-hosted `cryptocurrency-icons`
+ * package (durable CDN, color SVGs). Provider-independent — works for Coinbase data too,
+ * which carries no image field. Falls back to the colored initial avatar on load error.
+ */
+export function coinIconUrl(symbol: string): string {
+  return `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${symbol.toLowerCase()}.svg`;
+}

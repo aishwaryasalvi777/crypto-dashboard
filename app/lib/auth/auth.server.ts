@@ -12,9 +12,27 @@ const USER_SESSION_KEY = "userId";
  * Uses a length-aware constant-ish comparison to avoid trivially leaking via timing.
  */
 export function verifyCredentials(username: string, password: string): boolean {
-  const expectedUser = process.env.AUTH_USERNAME || "admin";
-  const expectedPass = process.env.AUTH_PASSWORD || "password";
-  return safeEqual(username, expectedUser) && safeEqual(password, expectedPass);
+  const { user, pass } = expectedCredentials();
+  return safeEqual(username, user) && safeEqual(password, pass);
+}
+
+/**
+ * Resolve the expected credentials. In production we **fail closed**: if the env vars aren't set we
+ * throw rather than silently accepting the well-known dev defaults — a forgotten env var must never
+ * ship working `admin`/`password` login. In development the defaults are a convenience.
+ */
+function expectedCredentials(): { user: string; pass: string } {
+  const user = process.env.AUTH_USERNAME;
+  const pass = process.env.AUTH_PASSWORD;
+  if (process.env.NODE_ENV === "production") {
+    if (!user || !pass) {
+      throw new Error(
+        "AUTH_USERNAME and AUTH_PASSWORD must be set in production (refusing to use defaults).",
+      );
+    }
+    return { user, pass };
+  }
+  return { user: user || "admin", pass: pass || "password" };
 }
 
 function safeEqual(a: string, b: string): boolean {

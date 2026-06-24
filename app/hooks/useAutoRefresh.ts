@@ -6,7 +6,7 @@ import { useRevalidator } from "@remix-run/react";
  * loader (server-side fetch) — no client API logic. Returns whether a refresh is in flight
  * for the spinner, plus auto-refresh toggle state.
  */
-export function useAutoRefresh(intervalSeconds: number, initialAuto = true) {
+export function useAutoRefresh(intervalSeconds: number, initialAuto = false) {
   const revalidator = useRevalidator();
   const [auto, setAuto] = useState(initialAuto);
 

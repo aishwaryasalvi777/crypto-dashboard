@@ -1,13 +1,7 @@
 import type { CardOrder } from "~/hooks/useCardOrder";
-import {
-  avatarColor,
-  avatarLetter,
-  formatBtc,
-  formatChange,
-  formatUsd,
-  isPositive,
-} from "~/lib/crypto/format";
+import { formatBtc, formatChange, formatUsd, isPositive } from "~/lib/crypto/format";
 import type { Coin } from "~/lib/crypto/types";
+import { CoinAvatar } from "./CoinAvatar";
 import { dragProps } from "./dragProps";
 import { Sparkline } from "./Sparkline";
 
@@ -19,9 +13,9 @@ interface CoinRowProps {
 
 /** List-view row mirroring the table grid columns. */
 export function CoinRow({ coin, index, order }: CoinRowProps) {
-  const hasChange = coin.change24h !== null;
+  const change = coin.change24h;
   const hasSpark = coin.sparkline.length > 0;
-  const positive = isPositive(coin.change24h ?? 0);
+  const positive = isPositive(change ?? 0);
   const sparkColor = positive ? "#16a34a" : "#ef4444";
 
   return (
@@ -30,9 +24,7 @@ export function CoinRow({ coin, index, order }: CoinRowProps) {
         ⠿
       </span>
       <div className="row__asset">
-        <div className="avatar" style={{ width: 30, height: 30, fontSize: 13, background: avatarColor(index) }}>
-          {avatarLetter(coin.symbol)}
-        </div>
+        <CoinAvatar symbol={coin.symbol} index={index} size={30} />
         <div className="coin-id">
           <div className="coin-id__name">{coin.name}</div>
           <div className="coin-id__symbol">{coin.symbol}</div>
@@ -44,9 +36,9 @@ export function CoinRow({ coin, index, order }: CoinRowProps) {
         <span />
       )}
       <span className="row__price right">{formatUsd(coin.priceUsd)}</span>
-      {hasChange ? (
+      {change !== null ? (
         <span className="row__change right" data-positive={positive}>
-          {formatChange(coin.change24h as number)}
+          {formatChange(change)}
         </span>
       ) : (
         <span className="row__btc right">—</span>
