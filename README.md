@@ -354,8 +354,3 @@ documentation.md             # consolidated project record (overview, decisions,
 CLAUDE.md                    # architecture + contribution guidelines for AI/engineers
 ```
 
----
-
-## License
-
-Take-home exercise — not licensed for redistribution.
