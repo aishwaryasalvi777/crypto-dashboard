@@ -50,32 +50,28 @@ that persists, and session-based authentication.
 
 ## Features
 
-### Core requirements
+````markdown
+## Features
 
-| Requirement | Status |
+| Feature | Status |
 | --- | --- |
 | Responsive card layout, 10+ coins (name, symbol, USD rate, BTC rate) | ✅ 12 coins |
-| Dynamic data fetching on page load | ✅ Remix `loader` (server-side) |
-| Manual refresh **and** auto-refresh (configurable interval) | ✅ DONE|
+| Dynamic data fetching on page load | ✅ Remix loader (server-side) |
+| Manual refresh and auto-refresh (configurable interval) | ✅ DONE |
 | Drag-and-drop reordering, persists while on the page | ✅ native HTML5 DnD |
 | Filter by name or symbol | ✅ DONE |
-
-### Bonus / extras
-
-| Item | Status |
-| --- | --- |
-| Card order persisted to `localStorage` | ✅ survives reload |
+| Card order persisted to localStorage | ✅ survives reload |
 | Dark / light mode toggle | ✅ persisted, SSR-safe (no flash) |
 | Loading + error states | ✅ skeletons, error + retry |
 | User authentication | ✅ env credentials + signed cookie session |
-| Unit tests | ✅ 35 tests (Vitest) |
-| **Customizable watchlist** | ✅ search the top-250 market, **add / remove** coins, persisted (`localStorage`), default = 12 |
+| Unit tests | ✅ 61 tests (Vitest) |
+| Customizable watchlist | ✅ search the top-250 market, add / remove coins, persisted (localStorage), default = 12 |
 | Real coin logos | ✅ color SVGs w/ graceful initial-letter fallback |
 | Grid / list view toggle | ✅ persisted |
 | 24h change badges + 7-day sparklines | ✅ (hybrid / coingecko) |
-| Empty-search state, accessible focus styles, tabular-figure prices | ✅ DONE|
+| Empty-search state, accessible focus styles, tabular-figure prices | ✅ DONE |
 | Pluggable data-provider layer | ✅ swap the live API without touching the UI |
-
+````
 ---
 
 ## Tech stack
