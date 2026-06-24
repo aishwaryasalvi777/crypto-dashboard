@@ -73,7 +73,7 @@ that persists, and session-based authentication.
 | Real coin logos | ✅ color SVGs w/ graceful initial-letter fallback |
 | Grid / list view toggle | ✅ persisted |
 | 24h change badges + 7-day sparklines | ✅ (hybrid / coingecko) |
-| Empty-search state, accessible focus styles, tabular-figure prices | ✅ |
+| Empty-search state, accessible focus styles, tabular-figure prices | ✅ DONE|
 | Pluggable data-provider layer | ✅ swap the live API without touching the UI |
 
 ---
