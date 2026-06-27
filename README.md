@@ -41,7 +41,6 @@ that persists, and session-based authentication.
   - [Deployment (Netlify)](#deployment-netlify)
   - [Guidelines for AI follow-up features](#guidelines-for-ai-follow-up-features)
   - [Project structure](#project-structure)
-  - [License](#license)
 
 ---
 
