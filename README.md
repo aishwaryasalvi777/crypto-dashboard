@@ -16,7 +16,7 @@ that persists, and session-based authentication.
 ---
 
 ## Table of contents
-
+- [Project structure](#project-structure)
 - [Tessera — Crypto Dashboard](#tessera--crypto-dashboard)
   - [Table of contents](#table-of-contents)
   - [Features](#features)
@@ -40,7 +40,7 @@ that persists, and session-based authentication.
   - [Testing](#testing)
   - [Deployment (Netlify)](#deployment-netlify)
   - [Guidelines for AI follow-up features](#guidelines-for-ai-follow-up-features)
-  - [Project structure](#project-structure)
+ 
 
 ---
 
@@ -77,6 +77,30 @@ that persists, and session-based authentication.
 - **Plain CSS** with CSS custom-property theme tokens — no UI framework
 - **Deployed on Netlify** via `@netlify/remix-adapter` (serverless SSR)
 
+---
+## Project structure
+
+```
+app/
+├── root.tsx                 # document shell, theme bootstrapping
+├── routes/
+│   ├── _index.tsx           # redirect → /dashboard
+│   ├── login.tsx            # login form + action
+│   ├── logout.tsx           # logout action
+│   └── dashboard.tsx        # protected; loader fetches markets
+├── components/              # Header, Controls, CoinCard/Row, CoinAvatar, AddCoinPanel, states…
+├── hooks/                   # useLocalStorage, useTheme, useWatchlist, useAutoRefresh
+├── lib/
+│   ├── auth/                # session + credential auth (server-only)
+│   ├── crypto/              # types, provider interface, hybrid/coinbase/coingecko, cache, format
+│   ├── watchlist.ts         # add/remove/reconcile (pure)
+│   └── theme.ts             # theme tokens + types
+└── styles/app.css           # design tokens + component styles
+tests/                       # Vitest unit tests
+netlify.toml                 # Netlify build + secrets-scan config
+documentation.md             # consolidated project record (overview, decisions, history)
+CLAUDE.md                    # architecture + contribution guidelines for AI/engineers
+```
 ---
 
 ## Quick start
@@ -301,28 +325,3 @@ prices, per-coin detail pages, sortable columns, currency selector, real multi-u
 rationale for each.
 
 ---
-
-## Project structure
-
-```
-app/
-├── root.tsx                 # document shell, theme bootstrapping
-├── routes/
-│   ├── _index.tsx           # redirect → /dashboard
-│   ├── login.tsx            # login form + action
-│   ├── logout.tsx           # logout action
-│   └── dashboard.tsx        # protected; loader fetches markets
-├── components/              # Header, Controls, CoinCard/Row, CoinAvatar, AddCoinPanel, states…
-├── hooks/                   # useLocalStorage, useTheme, useWatchlist, useAutoRefresh
-├── lib/
-│   ├── auth/                # session + credential auth (server-only)
-│   ├── crypto/              # types, provider interface, hybrid/coinbase/coingecko, cache, format
-│   ├── watchlist.ts         # add/remove/reconcile (pure)
-│   └── theme.ts             # theme tokens + types
-└── styles/app.css           # design tokens + component styles
-tests/                       # Vitest unit tests
-netlify.toml                 # Netlify build + secrets-scan config
-documentation.md             # consolidated project record (overview, decisions, history)
-CLAUDE.md                    # architecture + contribution guidelines for AI/engineers
-```
-
