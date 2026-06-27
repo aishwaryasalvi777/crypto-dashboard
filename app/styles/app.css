@@ -1093,3 +1093,349 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Login Option 2 (lo2-*) ------------------------------------------------ */
+@keyframes lo2-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes lo2-aurora {
+  0%, 100% { transform: translate(-6%, -4%) scale(1.1); }
+  50% { transform: translate(7%, 5%) scale(1.25); }
+}
+@keyframes lo2-aurora2 {
+  0%, 100% { transform: translate(5%, 6%) scale(1.15); }
+  50% { transform: translate(-6%, -5%) scale(1.05); }
+}
+@keyframes lo2-glow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(59, 130, 246, 0.32); }
+  50% { box-shadow: 0 8px 26px rgba(59, 130, 246, 0.6); }
+}
+@keyframes lo2-shimmer {
+  0% { transform: translateX(-160%) skewX(-18deg); }
+  55%, 100% { transform: translateX(420%) skewX(-18deg); }
+}
+@keyframes lo2-dash {
+  to { stroke-dashoffset: 0; }
+}
+
+.lo2-root {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070a10;
+  font-family: "DM Sans", system-ui, sans-serif;
+  overflow: hidden;
+  padding: 60px 24px;
+  box-sizing: border-box;
+}
+
+.lo2-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lo2-aurora {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.lo2-aurora--1 {
+  width: 680px;
+  height: 680px;
+  top: -220px;
+  left: -140px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.5), transparent 68%);
+  filter: blur(60px);
+  animation: lo2-aurora 16s ease-in-out infinite;
+}
+
+.lo2-aurora--2 {
+  width: 560px;
+  height: 560px;
+  bottom: -220px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.46), transparent 70%);
+  filter: blur(70px);
+  animation: lo2-aurora2 20s ease-in-out infinite;
+}
+
+.lo2-chart-svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 42%;
+  opacity: 0.5;
+}
+
+.lo2-chart-line {
+  animation: lo2-dash 3s ease-out forwards;
+}
+
+.lo2-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at 50% 42%, #000, transparent 78%);
+}
+
+.lo2-ticker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(7, 10, 16, 0.6);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  z-index: 3;
+}
+
+.lo2-ticker__track {
+  display: flex;
+  gap: 34px;
+  white-space: nowrap;
+  padding-left: 34px;
+  animation: lo2-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.lo2-ticker__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cfd6e4;
+  font-variant-numeric: tabular-nums;
+}
+
+.lo2-ticker__symbol {
+  color: #7d869a;
+}
+
+.lo2-card {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  max-width: 412px;
+  background: rgba(18, 22, 31, 0.72);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  padding: 34px 34px 30px;
+}
+
+.lo2-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.lo2-brand__mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  box-shadow: 0 8px 22px rgba(59, 130, 246, 0.33);
+}
+
+.lo2-brand__text {
+  text-align: center;
+  line-height: 1.2;
+}
+
+.lo2-brand__name {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.lo2-brand__sub {
+  font-size: 10px;
+  color: #7d869a;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.lo2-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9aa3b6;
+  margin-bottom: 7px;
+}
+
+.lo2-field {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.lo2-field__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #5a6478;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.lo2-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  color: #eaeef7;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 14px 0 40px;
+  font-size: 14px;
+  font-family: "DM Sans", sans-serif;
+  outline: none;
+}
+
+.lo2-input:focus {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.lo2-input--pass {
+  padding-right: 44px;
+}
+
+.lo2-toggle-pass {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #5a6478;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.lo2-toggle-pass:hover {
+  color: #eaeef7;
+}
+
+.lo2-row {
+  margin-bottom: 20px;
+}
+
+.lo2-remember {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #cfd6e4;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0;
+}
+
+.lo2-remember__box {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid #5a6478;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.lo2-submit {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  animation: lo2-glow 2.8s ease-in-out infinite;
+}
+
+.lo2-submit:hover {
+  filter: brightness(1.08);
+}
+
+.lo2-submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+  animation: none;
+}
+
+.lo2-submit__shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 36%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: lo2-shimmer 3.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.lo2-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #7d869a;
+  margin-top: 22px;
+}
+
+.lo2-secure__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  flex-shrink: 0;
+}
