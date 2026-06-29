@@ -19,12 +19,12 @@
 }
 
 [data-theme="light"] {
-  --bg: #f5f6f8;
+  --bg: #e8edf5;
   --surface: #ffffff;
-  --surface2: #eef1f5;
-  --border: #e4e8ee;
+  --surface2: #f1f5fc;
+  --border: #c2cfe0;
   --text: #0d121c;
-  --muted: #6a7283;
+  --muted: #5c6a80;
 }
 
 /* --- Reset / base ---------------------------------------------------------- */
@@ -170,6 +170,35 @@ input::placeholder {
 .refresh-btn {
   position: relative;
   background: var(--surface2);
+}
+.icon-btn.refresh-btn {
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 6px 12px;
+  gap: 7px;
+}
+.refresh-btn__labels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.refresh-btn__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+.refresh-btn__countdown {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 .live-dot {
   position: absolute;
@@ -391,6 +420,18 @@ input::placeholder {
 }
 .switch[data-on="true"] .switch__knob {
   left: 16px;
+}
+/* In light mode the border color is too close to white — darken the off-track so the knob shows */
+[data-theme="light"] .switch {
+  background: #8fa4bd;
+}
+[data-theme="light"] .switch[data-on="true"] {
+  background: var(--accent);
+}
+
+/* User avatar (header + dropdown) — accent bg so the white initial is always visible */
+.avatar--user {
+  background: var(--accent);
 }
 
 .spin {

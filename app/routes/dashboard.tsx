@@ -42,7 +42,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
 
   const [theme, toggleTheme] = useTheme();
-  const { refresh, auto, toggleAuto, isRefreshing } = useAutoRefresh(refreshSeconds);
+  const { refresh, auto, toggleAuto, isRefreshing, countdown } = useAutoRefresh(refreshSeconds);
 
   const [query, setQuery] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -71,10 +71,10 @@ export default function Dashboard() {
   const showGrid = hasCatalog && !watchlistEmpty && !filterEmpty && view === "grid";
   const showList = hasCatalog && !watchlistEmpty && !filterEmpty && view === "list";
 
-  const updatedLabel = isRefreshing && hasCatalog
+  const updatedLabel = (isRefreshing || isNavigating) && hasCatalog
     ? "Updating…"
     : lastUpdated
-      ? `Updated ${new Date(lastUpdated).toLocaleTimeString("en-US")}`
+      ? `Updated ${new Date(lastUpdated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
       : "";
 
   return (
@@ -82,6 +82,7 @@ export default function Dashboard() {
       <Header
         userName={userName}
         updatedLabel={updatedLabel}
+        countdown={auto && !(isRefreshing || isNavigating) ? countdown : null}
         isRefreshing={isRefreshing || isNavigating}
         auto={auto}
         theme={theme}
@@ -96,7 +97,7 @@ export default function Dashboard() {
         onQueryChange={setQuery}
         onViewChange={setView}
         onAddClick={() => setShowAdd(true)}
-        countLabel={hasCatalog ? `${visible.length} of ${watchlist.ids.length} tracked` : ""}
+        countLabel={hasCatalog ? `${catalog.length}+ coins available` : ""}
       />
 
       <div className="hint-row">

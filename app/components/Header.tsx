@@ -6,6 +6,7 @@ import type { Theme } from "~/lib/theme";
 interface HeaderProps {
   userName: string;
   updatedLabel: string;
+  countdown: number | null;
   isRefreshing: boolean;
   auto: boolean;
   theme: Theme;
@@ -17,6 +18,7 @@ interface HeaderProps {
 export function Header({
   userName,
   updatedLabel,
+  countdown,
   isRefreshing,
   auto,
   theme,
@@ -49,6 +51,14 @@ export function Header({
       <div className="header__actions">
         <button type="button" className="icon-btn refresh-btn" title="Refresh now" onClick={onRefresh}>
           <span className={isRefreshing ? "spin" : undefined}>↻</span>
+          {updatedLabel && (
+            <span className="refresh-btn__labels">
+              <span className="refresh-btn__label">{updatedLabel}</span>
+              {countdown !== null && (
+                <span className="refresh-btn__countdown">in {countdown}s</span>
+              )}
+            </span>
+          )}
           <span className="live-dot" data-live={live} />
         </button>
 
@@ -61,7 +71,7 @@ export function Header({
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
           >
-            <span className="avatar avatar--sm">{initial}</span>
+            <span className="avatar avatar--sm avatar--user">{initial}</span>
             <span className="profile__caret" data-open={menuOpen}>⌄</span>
           </button>
 
@@ -70,7 +80,7 @@ export function Header({
               <div className="profile__scrim" onClick={() => setMenuOpen(false)} />
               <div className="menu" role="menu">
                 <div className="menu__head">
-                  <span className="avatar">{initial}</span>
+                  <span className="avatar avatar--user">{initial}</span>
                   <div className="menu__id">
                     <div className="menu__name">Hi, {userName}!</div>
                     <div className="menu__sub">Signed in</div>
