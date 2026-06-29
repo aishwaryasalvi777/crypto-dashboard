@@ -39,8 +39,6 @@ that persists, and session-based authentication.
   - [Coin-id drift — how it's handled](#coin-id-drift--how-its-handled)
   - [Testing](#testing)
   - [Deployment (Netlify)](#deployment-netlify)
-  - [Guidelines for AI follow-up features](#guidelines-for-ai-follow-up-features)
- 
 
 ---
 
@@ -99,7 +97,6 @@ app/
 tests/                       # Vitest unit tests
 netlify.toml                 # Netlify build + secrets-scan config
 documentation.md             # consolidated project record (overview, decisions, history)
-CLAUDE.md                    # architecture + contribution guidelines for AI/engineers
 ```
 ---
 
@@ -299,29 +296,5 @@ function for SSR. Config lives in [`netlify.toml`](./netlify.toml):
 To deploy your own: connect the repo, set the [environment variables](#environment-variables) in
 Netlify, and push. (See [documentation.md](./documentation.md) for the full deployment story,
 including the three issues solved along the way.)
-
----
-
-## Guidelines for AI follow-up features
-
-This codebase is structured so an AI agent (or any engineer) can add features without breaking its
-seams. Full detail in [CLAUDE.md](./CLAUDE.md); the essentials:
-
-1. **New data sources implement `CryptoProvider` and register in the factory** — never fetch prices
-   from a component or the browser. The `Coin` type is the contract.
-2. **Numbers in the model, strings at the edge.** Add raw fields to `Coin`; format them in
-   `format.ts` with a unit test. Don't bake display strings into a provider.
-3. **Server-only code lives in `*.server.ts`** (anything reading `process.env`, secrets, or Node
-   APIs) so it's stripped from the client bundle.
-4. **Persisted client state goes through `useLocalStorage`** with a `cd_` key prefix and must be
-   SSR-safe (no `localStorage` access during the first render).
-5. **Theme values are CSS custom properties under `[data-theme]`** — keep both themes in sync; no
-   inline colors.
-6. **Add a test with each logic change**, and run `npm run typecheck && npm test` before declaring
-   done. Keep unit tests offline (fixtures/fakes, no network) so CI stays green without keys.
-
-`CLAUDE.md` also tracks **what's done, what's deferred, and a ready backlog** (watchlists, WebSocket
-prices, per-coin detail pages, sortable columns, currency selector, real multi-user auth) with
-rationale for each.
 
 ---
